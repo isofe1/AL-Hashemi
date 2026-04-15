@@ -10,15 +10,13 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="mobile-topbar">
-    <button id="sidebarToggle" class="icon-btn" aria-label="فتح القائمة">
-      <span></span><span></span><span></span>
-    </button>
-    <img src="logo.png" alt="الشعار" class="topbar-logo" />
-  </div>
-
   <div id="layout" class="layout">
     <aside id="sidebar" class="sidebar">
+      <button id="sidebarToggle" class="sidebar-toggle" type="button" aria-label="طي الشريط الجانبي" aria-expanded="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M15.5 4.5L8 12l7.5 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
       <div class="sidebar__header">
         <img src="Al-Hashemi.png" alt="أحسين الهاشمي" class="teacher-image" />
         <h1>حسين الهاشمي</h1>

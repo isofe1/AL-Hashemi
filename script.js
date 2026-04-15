@@ -19,6 +19,7 @@ const loadingEl = document.getElementById("loading");
 const errorEl = document.getElementById("error");
 const sidebarEl = document.getElementById("sidebar");
 const sidebarToggleEl = document.getElementById("sidebarToggle");
+const layoutEl = document.getElementById("layout");
 
 const modalEl = document.getElementById("videoModal");
 const modalVideoEl = document.getElementById("modalVideo");
@@ -333,8 +334,23 @@ function showError(message) {
   if (message) errorEl.textContent = message;
 }
 
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 900px)").matches;
+}
+
+function setSidebarCollapsed(collapsed) {
+  sidebarEl.classList.toggle("is-collapsed", collapsed);
+  layoutEl.classList.toggle("sidebar-collapsed", collapsed);
+  sidebarToggleEl.setAttribute("aria-expanded", String(!collapsed));
+}
+
+function syncSidebarForViewport() {
+  setSidebarCollapsed(isMobileViewport());
+}
+
 sidebarToggleEl.addEventListener("click", () => {
-  sidebarEl.classList.toggle("open");
+  const isCollapsed = sidebarEl.classList.contains("is-collapsed");
+  setSidebarCollapsed(!isCollapsed);
 });
 
 classListEl.addEventListener("click", (event) => {
@@ -343,14 +359,14 @@ classListEl.addEventListener("click", (event) => {
 
   const index = Number(button.dataset.classIndex);
   if (!Number.isInteger(index) || index === state.activeClassIndex) {
-    sidebarEl.classList.remove("open");
+    if (isMobileViewport()) setSidebarCollapsed(true);
     return;
   }
 
   state.activeClassIndex = index;
   renderSidebar();
   renderLectures(true);
-  sidebarEl.classList.remove("open");
+  if (isMobileViewport()) setSidebarCollapsed(true);
 });
 
 lecturesGridEl.addEventListener("click", (event) => {
@@ -380,5 +396,9 @@ document.addEventListener("keydown", (event) => {
     closeVideoModal();
   }
 });
+
+const mobileMediaQuery = window.matchMedia("(max-width: 900px)");
+syncSidebarForViewport();
+mobileMediaQuery.addEventListener("change", syncSidebarForViewport);
 
 init();
