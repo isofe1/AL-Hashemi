@@ -248,7 +248,7 @@ function checkContinueWatching() {
     const data = JSON.parse(savedDataStr);
     const savedTime = localStorage.getItem('vid_progress_' + data.lecture.url);
     
-    if (savedTime && parseFloat(savedTime) > 3) {
+    if (savedTime && parseFloat(savedTime) > 30) {
       continueText.textContent = `${data.chapterName} - ${data.lecture.title}`;
       continueBanner.classList.remove("hidden");
       setTimeout(() => continueBanner.classList.add("show"), 500); // تأخير بسيط لجمالية الدخول
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   player.on('timeupdate', () => {
-    if (currentVideoUrl && player.currentTime > 3) {
+    if (currentVideoUrl && player.currentTime > 30) {
       localStorage.setItem('vid_progress_' + currentVideoUrl, player.currentTime);
     }
   });
