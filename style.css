@@ -88,6 +88,8 @@ body {
   margin: 14px 0 7px;
   font-size: 1.45rem;
   font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 .sidebar__header p {
@@ -116,7 +118,8 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.01);
-  color: var(--text);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   text-align: right;
   padding: 12px 12px;
   font: inherit;
@@ -130,10 +133,10 @@ body {
 }
 
 .class-btn:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+  background: rgba(30, 144, 255, 0.15);
+  border-color: rgba(30, 144, 255, 0.32);
+  box-shadow: 0 0 18px rgba(30, 144, 255, 0.18), 0 6px 16px rgba(0, 0, 0, 0.24);
 }
 
 .class-btn.active {
@@ -178,15 +181,18 @@ body {
 
 .eyebrow {
   margin: 0 0 9px;
-  color: #bdc7d6;
+  color: #f3f8ff;
   font-weight: 500;
   letter-spacing: 0.3px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.52);
 }
 
 .content__header h2 {
   margin: 0;
   font-size: clamp(1.45rem, 3.2vw, 2.2rem);
   line-height: 1.2;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 .content-logo {
@@ -256,10 +262,10 @@ body {
 }
 
 .lecture-card:hover {
-  transform: scale(1.03);
-  filter: brightness(1.08);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px) scale(1.01);
+  filter: brightness(1.04);
+  border-color: rgba(30, 144, 255, 0.34);
+  box-shadow: 0 0 22px rgba(30, 144, 255, 0.18), var(--shadow-md);
 }
 
 .thumbnail-wrap {
@@ -304,6 +310,7 @@ body {
   pointer-events: none;
   z-index: 2;
   backdrop-filter: blur(2px);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .fallback-play {
@@ -340,6 +347,8 @@ body {
   font-size: 1.04rem;
   font-weight: 700;
   line-height: 1.35;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .watch-btn {
@@ -347,17 +356,22 @@ body {
   border-radius: 10px;
   padding: 10px 16px;
   color: #fff;
-  background: linear-gradient(120deg, #1e90ff, #1576d0);
+  background: linear-gradient(120deg, rgba(30, 144, 255, 0.42), rgba(30, 144, 255, 0.26));
+  border: 1px solid rgba(30, 144, 255, 0.48);
+  backdrop-filter: blur(20px);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition: transform 0.3s ease, filter 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .watch-btn:hover {
   transform: translateY(-1px);
-  filter: brightness(1.08);
+  filter: brightness(1.03);
+  background: linear-gradient(120deg, rgba(30, 144, 255, 0.5), rgba(30, 144, 255, 0.32));
+  box-shadow: 0 0 20px rgba(30, 144, 255, 0.28);
 }
 
 .modal {
@@ -389,6 +403,8 @@ body {
 .modal__content h3 {
   margin: 0 0 13px;
   font-size: 1.2rem;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 #modalVideo {
@@ -404,13 +420,21 @@ body {
   left: 10px;
   width: 36px;
   height: 36px;
-  border: none;
+  border: 1px solid rgba(30, 144, 255, 0.52);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(30, 144, 255, 0.28);
+  backdrop-filter: blur(20px);
   color: white;
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.close-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(30, 144, 255, 0.38);
+  box-shadow: 0 0 18px rgba(30, 144, 255, 0.24);
 }
 
 .mobile-topbar {
@@ -418,17 +442,20 @@ body {
 }
 
 .icon-btn {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: rgba(30, 144, 255, 0.2);
+  border: 1px solid rgba(30, 144, 255, 0.44);
   border-radius: 10px;
   padding: 8px;
-  backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(20px);
   box-shadow: var(--glass-shadow);
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .icon-btn:hover {
-  background: var(--glass-bg-strong);
-  border-color: var(--glass-border-strong);
+  transform: translateY(-1px);
+  background: rgba(30, 144, 255, 0.3);
+  border-color: rgba(30, 144, 255, 0.56);
+  box-shadow: 0 0 18px rgba(30, 144, 255, 0.22), var(--glass-shadow);
 }
 
 .icon-btn span {
@@ -471,7 +498,7 @@ body {
 
   .sidebar {
     transform: translateX(100%);
-    transition: transform 0.32s ease;
+    transition: transform 0.3s ease;
     box-shadow: -12px 0 30px rgba(0, 0, 0, 0.45);
   }
 
