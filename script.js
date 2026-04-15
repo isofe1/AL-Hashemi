@@ -154,19 +154,21 @@ function populateLectureCards(selectedClass) {
   lecturesGridEl.classList.remove("hidden");
 }
 
-function renderFallbackCover(container, oldElement, chapterName, classIndex) {
+function renderFallbackCover(container, oldElement, chapterName, classIndex, lectureTitle) {
   const fallback = document.createElement("div");
   fallback.className = "thumbnail-fallback thumbnail-media";
-  
-  // تطبيق التدرج اللوني الهادئ بناءً على رقم الفصل
-  const gradient = CHAPTER_GRADIENTS[classIndex % CHAPTER_GRADIENTS.length];
-  fallback.style.background = gradient;
+  fallback.style.background = CHAPTER_GRADIENTS[classIndex % CHAPTER_GRADIENTS.length];
 
   const chapterLabel = document.createElement("div");
   chapterLabel.className = "fallback-chapter-name";
   chapterLabel.textContent = chapterName;
+
+  // إضافة عنوان المحاضرة
+  const titleLabel = document.createElement("div");
+  titleLabel.className = "fallback-lecture-title";
+  titleLabel.textContent = lectureTitle || "";
   
-  fallback.append(chapterLabel);
+  fallback.append(chapterLabel, titleLabel);
 
   if (container && oldElement && oldElement.parentNode === container) {
     container.replaceChild(fallback, oldElement);
