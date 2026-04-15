@@ -180,7 +180,7 @@ function renderFallbackCover(container, oldElement, chapterName, classIndex, lec
 function openVideoModal(lecture) {
   modalTitleEl.textContent = lecture.title || "مشاهدة المحاضرة";
   
-  // تغيير مصدر الفيديو للمشغل الجديد (Plyr)
+  // إرسال رابط الفيديو للمشغل الاحترافي الجديد
   player.source = {
     type: 'video',
     title: lecture.title,
@@ -188,14 +188,21 @@ function openVideoModal(lecture) {
   };
 
   modalEl.classList.remove("hidden");
+  
+  // قفل السكرول ومنع حركة الخلفية نهائياً
   document.body.style.overflow = "hidden";
-  player.play(); // تشغيل تلقائي فور الفتح
+  document.body.style.touchAction = "none"; 
+  
+  player.play(); // تشغيل تلقائي
 }
 
 function closeVideoModal() {
-  player.stop(); // إيقاف الفيديو تماماً عند الإغلاق
+  player.stop(); // إيقاف الفيديو تماماً ومنع استمرار الصوت
   modalEl.classList.add("hidden");
+  
+  // إرجاع السكرول للطبيعي
   document.body.style.overflow = "";
+  document.body.style.touchAction = ""; 
 }
 
 function showLoading() {
