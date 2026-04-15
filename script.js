@@ -1,16 +1,8 @@
 const state = {
   data: null,
   activeClassIndex: 0,
-  renderToken: 0,
   pendingRenderTimer: null,
 };
-
-const THUMBNAIL_ROOT_MARGIN = "300px";
-const MAX_THUMBNAIL_CONCURRENCY = 3;
-
-const thumbnailCache = new Map();
-const thumbnailQueue = [];
-let activeThumbnailJobs = 0;
 
 const classListEl = document.getElementById("classList");
 const classTitleEl = document.getElementById("classTitle");
@@ -25,18 +17,6 @@ const modalEl = document.getElementById("videoModal");
 const modalVideoEl = document.getElementById("modalVideo");
 const modalTitleEl = document.getElementById("modalTitle");
 const closeModalEl = document.getElementById("closeModal");
-
-const thumbnailObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      const mediaEl = entry.target;
-      thumbnailObserver.unobserve(mediaEl);
-      enqueueThumbnailJob(mediaEl);
-    });
-  },
-  { rootMargin: THUMBNAIL_ROOT_MARGIN }
-);
 
 async function init() {
   try {
@@ -63,7 +43,6 @@ async function init() {
 
 function renderSidebar() {
   classListEl.innerHTML = "";
-
   const fragment = document.createDocumentFragment();
 
   state.data.classes.forEach((classItem, index) => {
@@ -96,18 +75,18 @@ function renderLectures(animated = false) {
   if (animated) {
     lecturesGridEl.style.opacity = "0";
     state.pendingRenderTimer = setTimeout(() => {
-      populateLectureCards(selected.lectures || []);
+      populateLectureCards(selected);
       lecturesGridEl.style.opacity = "1";
       state.pendingRenderTimer = null;
     }, 120);
     return;
   }
 
-  populateLectureCards(selected.lectures || []);
+  populateLectureCards(selected);
 }
 
-function populateLectureCards(lectures) {
-  resetThumbnailWork();
+function populateLectureCards(selectedClass) {
+  const lectures = selectedClass.lectures || [];
   lecturesGridEl.innerHTML = "";
 
   const fragment = document.createDocumentFragment();
@@ -120,14 +99,21 @@ function populateLectureCards(lectures) {
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "thumbnail-wrap";
 
-    const thumbnail = document.createElement("img");
-    thumbnail.className = "thumbnail thumbnail-media";
-    thumbnail.alt = lecture.title || `محاضرة ${index + 1}`;
-    thumbnail.loading = "lazy";
-    thumbnail.decoding = "async";
-    thumbnail.fetchPriority = "low";
-    thumbnail.dataset.videoUrl = lecture.url || "";
-    thumbnail.dataset.renderToken = String(state.renderToken);
+    // تطبيق فكرة صورة الغلاف (Cover Image) الثابتة لكل فصل
+    let mediaElement;
+    if (selectedClass.coverImage || lecture.coverImage) {
+      mediaElement = document.createElement("img");
+      mediaElement.className = "thumbnail thumbnail-media";
+      mediaElement.alt = lecture.title || `محاضرة ${index + 1}`;
+      mediaElement.loading = "lazy";
+      mediaElement.src = lecture.coverImage || selectedClass.coverImage;
+      
+      // في حال فشل تحميل الصورة، نعرض الغلاف البديل
+      mediaElement.onerror = () => renderFallbackCover(thumbWrap, mediaElement, selectedClass.name);
+    } else {
+      // إذا لم يتم تحديد صورة في data.json، يتم رسم الغلاف الموحد الذكي مباشرة
+      mediaElement = renderFallbackCover(null, null, selectedClass.name);
+    }
 
     const thumbnailOverlay = document.createElement("div");
     thumbnailOverlay.className = "thumbnail-overlay";
@@ -137,7 +123,7 @@ function populateLectureCards(lectures) {
     durationBadge.className = "duration-badge";
     durationBadge.textContent = `▶ ${lecture.duration || "--:--"}`;
 
-    thumbWrap.append(thumbnail, thumbnailOverlay, durationBadge);
+    thumbWrap.append(mediaElement, thumbnailOverlay, durationBadge);
 
     const body = document.createElement("div");
     body.className = "lecture-body";
@@ -155,151 +141,30 @@ function populateLectureCards(lectures) {
     body.append(title, watchBtn);
     card.append(thumbWrap, body);
     fragment.appendChild(card);
-
-    thumbnailObserver.observe(thumbnail);
   });
 
   lecturesGridEl.appendChild(fragment);
   lecturesGridEl.classList.remove("hidden");
 }
 
-function resetThumbnailWork() {
-  state.renderToken += 1;
-  thumbnailObserver.disconnect();
-  thumbnailQueue.length = 0;
-}
-
-function enqueueThumbnailJob(mediaEl) {
-  const job = {
-    mediaEl,
-    videoUrl: mediaEl.dataset.videoUrl || "",
-    renderToken: Number(mediaEl.dataset.renderToken || "0"),
-  };
-
-  thumbnailQueue.push(job);
-  processThumbnailQueue();
-}
-
-function processThumbnailQueue() {
-  while (activeThumbnailJobs < MAX_THUMBNAIL_CONCURRENCY && thumbnailQueue.length) {
-    const job = thumbnailQueue.shift();
-    if (!job) break;
-
-    if (!isThumbnailJobValid(job)) {
-      continue;
-    }
-
-    activeThumbnailJobs += 1;
-
-    getThumbnailForUrl(job.videoUrl)
-      .then((thumbnailDataUrl) => {
-        if (!isThumbnailJobValid(job)) return;
-        job.mediaEl.src = thumbnailDataUrl;
-      })
-      .catch(() => {
-        if (!isThumbnailJobValid(job)) return;
-        renderFallbackThumbnail(job.mediaEl);
-      })
-      .finally(() => {
-        activeThumbnailJobs = Math.max(0, activeThumbnailJobs - 1);
-        processThumbnailQueue();
-      });
-  }
-}
-
-function isThumbnailJobValid(job) {
-  return job.mediaEl.isConnected && job.renderToken === state.renderToken;
-}
-
-function getThumbnailForUrl(url) {
-  if (!url || url.endsWith(".m3u8")) {
-    return Promise.reject(new Error("m3u8_or_invalid"));
-  }
-
-  if (!thumbnailCache.has(url)) {
-    thumbnailCache.set(url, generateVideoThumbnail(url));
-  }
-
-  return thumbnailCache.get(url);
-}
-
-function generateVideoThumbnail(url) {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.src = url;
-    video.muted = true;
-    video.preload = "metadata";
-    video.playsInline = true;
-
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error("thumbnail_timeout"));
-    }, 6000);
-
-    const cleanup = () => {
-      clearTimeout(timeout);
-      video.removeAttribute("src");
-      video.load();
-    };
-
-    video.addEventListener(
-      "loadedmetadata",
-      () => {
-        if (!isFinite(video.duration) || video.duration <= 0) {
-          cleanup();
-          reject(new Error("invalid_duration"));
-          return;
-        }
-
-        video.currentTime = Math.min(video.duration * 0.2, Math.max(video.duration - 0.2, 0));
-      },
-      { once: true }
-    );
-
-    video.addEventListener(
-      "seeked",
-      () => {
-        try {
-          const canvas = document.createElement("canvas");
-          canvas.width = 640;
-          canvas.height = 360;
-          const ctx = canvas.getContext("2d", { alpha: false });
-          if (!ctx) throw new Error("no_canvas_context");
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.78);
-          cleanup();
-          resolve(dataUrl);
-        } catch (err) {
-          cleanup();
-          reject(err);
-        }
-      },
-      { once: true }
-    );
-
-    video.addEventListener(
-      "error",
-      () => {
-        cleanup();
-        reject(new Error("video_error"));
-      },
-      { once: true }
-    );
-  });
-}
-
-function renderFallbackThumbnail(mediaEl) {
-  if (!mediaEl.isConnected) return;
-
+// دالة لرسم الغلاف الذكي الموحد (يحتوي على اسم الفصل)
+function renderFallbackCover(container, oldElement, chapterName) {
   const fallback = document.createElement("div");
   fallback.className = "thumbnail-fallback thumbnail-media";
 
+  const chapterLabel = document.createElement("div");
+  chapterLabel.className = "fallback-chapter-name";
+  chapterLabel.textContent = chapterName;
+
   const playIcon = document.createElement("div");
   playIcon.className = "fallback-play";
-  fallback.appendChild(playIcon);
+  
+  fallback.append(chapterLabel, playIcon);
 
-  mediaEl.replaceWith(fallback);
+  if (container && oldElement && oldElement.parentNode === container) {
+    container.replaceChild(fallback, oldElement);
+  }
+  return fallback;
 }
 
 function openVideoModal(lecture) {
@@ -381,6 +246,16 @@ lecturesGridEl.addEventListener("click", (event) => {
   if (!lecture) return;
 
   openVideoModal(lecture);
+});
+
+// إغلاق القائمة عند النقر على المحاضرات (للموبايل فقط)
+layoutEl.addEventListener("click", (event) => {
+  if (isMobileViewport() && !sidebarEl.classList.contains("is-collapsed")) {
+    // التأكد أن النقر لم يكن على الشريط الجانبي نفسه
+    if (!event.target.closest('.sidebar')) {
+      setSidebarCollapsed(true);
+    }
+  }
 });
 
 modalEl.addEventListener("click", (event) => {
