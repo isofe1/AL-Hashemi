@@ -266,6 +266,14 @@ body {
   position: relative;
 }
 
+.thumbnail-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
 .thumbnail,
 .thumbnail-media,
 .thumbnail-fallback {
@@ -286,13 +294,16 @@ body {
   position: absolute;
   left: 10px;
   bottom: 10px;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(8, 10, 14, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   color: #fff;
   font-size: 0.8rem;
   padding: 4px 8px;
   border-radius: 6px;
   line-height: 1;
   pointer-events: none;
+  z-index: 2;
+  backdrop-filter: blur(2px);
 }
 
 .fallback-play {

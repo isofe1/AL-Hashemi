@@ -128,11 +128,15 @@ function populateLectureCards(lectures) {
     thumbnail.dataset.videoUrl = lecture.url || "";
     thumbnail.dataset.renderToken = String(state.renderToken);
 
+    const thumbnailOverlay = document.createElement("div");
+    thumbnailOverlay.className = "thumbnail-overlay";
+    thumbnailOverlay.setAttribute("aria-hidden", "true");
+
     const durationBadge = document.createElement("span");
     durationBadge.className = "duration-badge";
     durationBadge.textContent = `▶ ${lecture.duration || "--:--"}`;
 
-    thumbWrap.append(thumbnail, durationBadge);
+    thumbWrap.append(thumbnail, thumbnailOverlay, durationBadge);
 
     const body = document.createElement("div");
     body.className = "lecture-body";
