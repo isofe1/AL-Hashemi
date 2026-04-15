@@ -533,15 +533,58 @@ body {
 }
 
 /* تم إصلاح الخطأ الإملائي هنا وتأمين حجم البطاقة للموبايل */
+/* تنسيق الموبايل: تحويل البطاقات إلى قائمة أفقية مضغوطة */
 @media (max-width: 640px) {
   .lectures-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px; /* تقليل المسافة بين الأسطر */
   }
   
   .lecture-card {
-    max-width: 420px;
-    margin: 0 auto;
-    width: 100%;
+    flex-direction: row; /* تحويل الترتيب من عمودي إلى أفقي */
+    align-items: center;
+    height: 110px; /* تحديد ارتفاع ثابت وصغير للبطاقة */
+    max-width: 100%;
+    padding-left: 10px;
+    backdrop-filter: none;
   }
+
+  .thumbnail-wrap {
+    width: 150px; /* تحديد عرض ثابت للصورة المصغرة */
+    height: 100%;
+    flex-shrink: 0;
+  }
+
+  .lecture-body {
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start; /* محاذاة النص لليمين */
+    text-align: right;
+    gap: 6px;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .lecture-title {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* لإضافة نقاط في حال كان العنوان طويلاً */
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  /* جعل زر المشاهدة أصغر ليتناسب مع القائمة */
+  .watch-btn {
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    align-self: flex-start;
+  }
+
+  /* تصغير نصوص الغلاف الذكي */
+  .fallback-chapter-name { font-size: 0.75rem; }
+  .fallback-lecture-title { font-size: 0.65rem; }
+  .duration-badge { font-size: 0.65rem; padding: 2px 6px; left: 6px; bottom: 6px; }
 }
