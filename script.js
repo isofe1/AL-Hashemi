@@ -214,6 +214,20 @@ function setSidebarCollapsed(collapsed) {
   sidebarEl.classList.toggle("is-collapsed", collapsed);
   layoutEl.classList.toggle("sidebar-collapsed", collapsed);
   sidebarToggleEl.setAttribute("aria-expanded", String(!collapsed));
+
+  // هذا الجزء الجديد الخاص بحل مشكلة "تسرب السكرول"
+  if (window.innerWidth <= 900) { // نطبق القفل فقط في الموبايل والتابلت
+    if (!collapsed) {
+      // إذا انفتحت القائمة: نقفل سكرول الصفحة الرئيسية
+      document.body.style.overflow = "hidden";
+    } else {
+      // إذا انسدت القائمة: نرجع السكرول طبيعي
+      document.body.style.overflow = "";
+    }
+  } else {
+    // نضمن إن السكرول شغال دائماً على الكمبيوتر
+    document.body.style.overflow = "";
+  }
 }
 
 function syncSidebarForViewport() {
