@@ -713,13 +713,15 @@ img {
 }
 
 .continue-text {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #fff;
   font-weight: 500;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 250px;
+  line-height: 1.4;
 }
 
 .continue-play {
@@ -748,6 +750,6 @@ img {
 }
 
 @media (max-width: 600px) {
-  .continue-banner { bottom: 15px; padding: 10px 12px 10px 16px; }
-  .continue-text { max-width: 150px; font-size: 0.85rem; }
+  .continue-banner { bottom: 15px; padding: 10px 12px 10px 16px; width: 90vw; }
+  .continue-text { max-width: 220px; font-size: 0.85rem; }
 }
