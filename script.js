@@ -119,7 +119,7 @@ function populateLectureCards(selectedClass) {
       mediaElement.src = lecture.coverImage || selectedClass.coverImage;
       mediaElement.onerror = () => renderFallbackCover(thumbWrap, mediaElement, selectedClass.name, state.activeClassIndex);
     } else {
-      mediaElement = renderFallbackCover(null, null, selectedClass.name, state.activeClassIndex);
+      mediaElement = renderFallbackCover(null, null, selectedClass.name, state.activeClassIndex, lecture.title);
     }
 
     const thumbnailOverlay = document.createElement("div");
