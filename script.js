@@ -1,4 +1,6 @@
 let player; 
+let currentVideoUrl = ""; // متغير ذكي لحفظ رابط الفيديو الحالي
+
 const state = {
   data: null,
   activeClassIndex: 0,
@@ -140,6 +142,7 @@ function getMimeType(url) {
 
 function openVideoModal(lecture) {
   modalTitleEl.textContent = lecture.title || "مشاهدة المحاضرة";
+  currentVideoUrl = lecture.url; // نحفظ الرابط الحالي
   
   player.source = {
     type: 'video',
@@ -149,13 +152,18 @@ function openVideoModal(lecture) {
   
   modalEl.classList.remove("hidden");
   
-  // قفل شامل للسكرول
   document.documentElement.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
   document.body.style.touchAction = "none"; 
   
-  // تأخير التشغيل بجزء من الثانية لضمان بقاء الأزرار واضحة
+  // استدعاء الوقت المحفوظ من الذاكرة إذا كان موجود
+  const savedTime = localStorage.getItem('vid_progress_' + currentVideoUrl);
+  
   setTimeout(() => {
+    // إذا اكو وقت محفوظ، قدم الفيديو اله
+    if (savedTime && parseFloat(savedTime) > 0) {
+      player.currentTime = parseFloat(savedTime);
+    }
     player.play();
   }, 300);
 }
@@ -219,6 +227,21 @@ document.addEventListener('DOMContentLoaded', () => {
     controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
     settings: ['quality', 'speed'],
     speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+  });
+
+  // حفظ تقدم المشاهدة تلقائياً كلما مشى الفيديو
+  player.on('timeupdate', () => {
+    // يحفظ بس إذا عبرت أول 3 ثواني
+    if (currentVideoUrl && player.currentTime > 3) {
+      localStorage.setItem('vid_progress_' + currentVideoUrl, player.currentTime);
+    }
+  });
+
+  // مسح الوقت المحفوظ إذا خلصت المحاضرة للاخير حتى تبدي من الصفر بالمرة الجاية
+  player.on('ended', () => {
+    if (currentVideoUrl) {
+      localStorage.removeItem('vid_progress_' + currentVideoUrl);
+    }
   });
 
   const videoWrapper = document.querySelector('.plyr');
