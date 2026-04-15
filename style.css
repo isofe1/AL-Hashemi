@@ -630,3 +630,25 @@ body {
   visibility: hidden !important;
   transition-delay: 4s !important; 
 }
+
+/* --- ملاحظة تكبير الشاشة (التي توسع البطاقة للأسفل) --- */
+.fullscreen-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 15px; /* هذا السطر هو اللي راح يعطيك المساحة المطلوبة للأسفل */
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fullscreen-hint svg {
+  width: 18px;
+  height: 18px;
+  color: #1e90ff; /* أزرق هادئ يمشي ويه ثيم المنصة */
+  opacity: 0.9;
+}
