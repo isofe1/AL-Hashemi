@@ -43,7 +43,7 @@ async function init() {
     renderSidebar();
     renderLectures();
     hideLoading();
-    checkContinueWatching(); // فحص المواصلة عند التشغيل
+    checkContinueWatching(); 
   } catch (e) { console.error(e); showError(); }
 }
 
@@ -219,7 +219,6 @@ function checkContinueWatching() {
       setTimeout(() => continueBanner.classList.add("show"), 500);
       continueBanner.onclick = (e) => {
         if(e.target.closest('#closeBannerBtn')) { continueBanner.classList.remove('show'); setTimeout(() => continueBanner.classList.add('hidden'), 400); return; }
-        // سحر التزامن: تحديث الخلفية قبل فتح الفيديو
         state.activeClassIndex = data.classIndex;
         renderSidebar();
         renderLectures();
@@ -231,6 +230,24 @@ function checkContinueWatching() {
     }
   }
 }
+
+// --- نظام القائمة الذكي (للمستخدم الجديد والقديم) ---
+const mobileMediaQuery = window.matchMedia("(max-width: 900px)");
+const hasVisited = localStorage.getItem('hashemi_visited_v1');
+
+if (!hasVisited) {
+  // مستخدم جديد أول مرة يدخل الموقع: القائمة تظهر له (مفتوحة)
+  setSidebarCollapsed(false);
+  localStorage.setItem('hashemi_visited_v1', 'true');
+} else {
+  // مستخدم قديم (سوى ريفريش): القائمة تكون مغلقة إذا موبايل، ومفتوحة إذا كمبيوتر
+  setSidebarCollapsed(isMobileViewport());
+}
+
+// تفاعل الشاشة في حال تدوير الموبايل
+mobileMediaQuery.addEventListener("change", () => {
+  setSidebarCollapsed(isMobileViewport());
+});
 
 init();
 
