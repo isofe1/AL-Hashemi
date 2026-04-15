@@ -648,3 +648,24 @@ body {
   height: 14px;
   color: inherit; /* يأخذ نفس لون النص */
 }
+
+/* --- (منع التحديد والنسخ وتحميل الصور) --- */
+* {
+  -webkit-touch-callout: none; /* منع ظهور القائمة عند اللمس المطول بالموبايل */
+  -webkit-user-select: none;   /* منع تحديد النص (سفاري وكروم) */
+  -moz-user-select: none;      /* منع تحديد النص (فايرفوكس) */
+  -ms-user-select: none;       /* منع التحديد (إيدج) */
+  user-select: none;           /* الخاصية القياسية لمنع النسخ */
+}
+
+/* السماح بالضغط على الأزرار فقط */
+button, .watch-btn, .class-btn {
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+
+/*  الصور من السحب واللمس المطول */
+img {
+  -webkit-user-drag: none; /* منع سحب الصورة بالماوس */
+  pointer-events: none;    /* إلغاء تفاعل الصورة مع اللمس تماماً */
+}
