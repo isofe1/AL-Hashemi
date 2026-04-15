@@ -1,5 +1,6 @@
 let player; 
 let currentVideoUrl = ""; 
+let currentLectureIndex = -1; // متغير جديد لمعرفة ترتيب المحاضرة الحالية
 
 const state = {
   data: null,
@@ -148,6 +149,16 @@ function getMimeType(url) {
 }
 
 function openVideoModal(lecture) {
+  // إخفاء شاشة النهاية فوراً عند فتح فيديو جديد (إذا كانت ظاهرة)
+  const endScreen = document.getElementById("endScreen");
+  if (endScreen) endScreen.classList.add("hidden");
+
+  // إيجاد ترتيب المحاضرة الحالية لمعرفة المحاضرة التي تليها
+  const currentClass = state.data.classes[state.activeClassIndex];
+  if (currentClass && currentClass.lectures) {
+    currentLectureIndex = currentClass.lectures.findIndex(l => l.url === lecture.url);
+  }
+
   modalTitleEl.textContent = lecture.title || "مشاهدة المحاضرة";
   currentVideoUrl = lecture.url; 
   player.source = { type: 'video', title: lecture.title, sources: [{ src: lecture.url, type: getMimeType(lecture.url) }] };
@@ -173,6 +184,10 @@ function hideModalVisually() {
   document.documentElement.style.overflow = "";
   document.body.style.overflow = "";
   document.body.style.touchAction = ""; 
+  
+  // التأكد من إخفاء شاشة النهاية عند الإغلاق
+  const endScreen = document.getElementById("endScreen");
+  if (endScreen) endScreen.classList.add("hidden");
 }
 
 function closeVideoModal() {
@@ -229,16 +244,12 @@ layoutEl.addEventListener("click", (e) => { if (isMobileViewport() && !sidebarEl
 modalEl.addEventListener("click", (e) => { if (e.target.dataset.close === "true") closeVideoModal(); });
 closeModalEl.addEventListener("click", closeVideoModal);
 
-// السيطرة على زر الرجوع في الهاتف (الحدث السحري)
+// السيطرة على زر الرجوع في الهاتف
 window.addEventListener('popstate', (event) => {
-  // 1. إذا كان المودال مفتوح، سده بدون ما تطلع من الموقع
   if (!modalEl.classList.contains('hidden')) {
     hideModalVisually();
   }
-
-  // 2. إذا انتقل بين الفصول، رجعه للفصل السابق بناءً على تاريخ المتصفح
   const newIndex = event.state && event.state.classIndex !== undefined ? event.state.classIndex : 0;
-  
   if (state.activeClassIndex !== newIndex) {
     state.activeClassIndex = newIndex;
     renderSidebar();
@@ -258,9 +269,8 @@ function checkContinueWatching() {
       setTimeout(() => continueBanner.classList.add("show"), 500);
       continueBanner.onclick = (e) => {
         if(e.target.closest('#closeBannerBtn')) { continueBanner.classList.remove('show'); setTimeout(() => continueBanner.classList.add('hidden'), 400); return; }
-        
         state.activeClassIndex = data.classIndex;
-        history.pushState({ classIndex: data.classIndex }, ""); // تحديث التاريخ
+        history.pushState({ classIndex: data.classIndex }, "");
         renderSidebar();
         renderLectures();
         if (isMobileViewport()) setSidebarCollapsed(true);
@@ -272,7 +282,6 @@ function checkContinueWatching() {
   }
 }
 
-// --- نظام القائمة الذكي (للمستخدم الجديد والقديم) ---
 const mobileMediaQuery = window.matchMedia("(max-width: 900px)");
 const hasVisited = localStorage.getItem('hashemi_visited_v1');
 
@@ -295,8 +304,43 @@ document.addEventListener('DOMContentLoaded', () => {
     settings: ['quality', 'speed'],
     speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
   });
-  player.on('timeupdate', () => { if (currentVideoUrl && player.currentTime > 30) localStorage.setItem('vid_progress_' + currentVideoUrl, player.currentTime); });
-  player.on('ended', () => { if (currentVideoUrl) { localStorage.removeItem('vid_progress_' + currentVideoUrl); localStorage.removeItem('hashemi_last_watched'); } });
+  
+  player.on('timeupdate', () => { 
+    if (currentVideoUrl && player.currentTime > 30) {
+      localStorage.setItem('vid_progress_' + currentVideoUrl, player.currentTime); 
+    }
+  });
+  
+  // --- نظام المحاضرة التالية (طريقة يوتيوب) ---
+  player.on('ended', () => { 
+    if (currentVideoUrl) { 
+      localStorage.removeItem('vid_progress_' + currentVideoUrl); 
+      localStorage.removeItem('hashemi_last_watched'); 
+    } 
+
+    const currentClass = state.data.classes[state.activeClassIndex];
+    if (currentClass && currentClass.lectures && currentLectureIndex !== -1) {
+      const nextLecture = currentClass.lectures[currentLectureIndex + 1];
+
+      // إذا كانت هناك محاضرة تالية، نعرض شاشة النهاية
+      if (nextLecture) {
+        const nextTitleEl = document.getElementById("nextLectureTitle");
+        const endScreen = document.getElementById("endScreen");
+        const playNextBtn = document.getElementById("playNextBtn");
+
+        if (nextTitleEl && endScreen && playNextBtn) {
+          nextTitleEl.textContent = nextLecture.title;
+          endScreen.classList.remove("hidden");
+
+          // برمجة زر التشغيل في شاشة النهاية
+          playNextBtn.onclick = () => {
+            openVideoModal(nextLecture);
+          };
+        }
+      }
+    }
+  });
+
   const videoWrapper = document.querySelector('.plyr');
   if (videoWrapper) {
     videoWrapper.addEventListener('dblclick', (e) => {
