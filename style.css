@@ -8,7 +8,7 @@
   --text: #f7f9fc;
   --muted: #9ca7b7;
   --border: rgba(255, 255, 255, 0.11);
-  --sidebar-width: 340px; /* تم التوسيع كما طلبت */
+  --sidebar-width: 340px;
   --radius-lg: 20px;
   --radius-md: 14px;
   --shadow-lg: 0 22px 48px rgba(0, 0, 0, 0.45);
@@ -42,7 +42,7 @@ body {
     #000000;
   letter-spacing: 0.1px;
   text-shadow: var(--text-shadow-soft);
-  overflow-x: hidden; /* ضروري جداً لكي لا يظهر شريط تمرير سفلي عند إزاحة القائمة */
+  overflow-x: hidden;
 }
 
 .hidden {
@@ -74,7 +74,6 @@ body {
   backdrop-filter: blur(20px);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  /* تم إزالة overflow-y من هنا لمنع اختفاء الزر الخارجي */
 }
 
 .sidebar.is-collapsed {
@@ -291,7 +290,8 @@ body {
 
 .lectures-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  /* السحر هنا: خلينا العرض 260 بكسل حتى تتوسع براحتها بالشاشات الأكبر */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 18px;
   animation: fadeIn 0.38s ease;
 }
@@ -342,7 +342,6 @@ body {
   background: #0b0b0b;
 }
 
-/* شكل الغلاف الذكي (البديل للصور المفقودة) */
 .thumbnail-fallback {
   display: flex;
   flex-direction: column;
@@ -378,28 +377,6 @@ body {
   z-index: 2;
   backdrop-filter: blur(2px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.fallback-play {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  position: relative;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-  z-index: 2;
-}
-
-.fallback-play::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-35%, -50%);
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
-  border-left: 12px solid #fff;
 }
 
 .lecture-body {
@@ -505,18 +482,15 @@ body {
   box-shadow: 0 0 18px rgba(30, 144, 255, 0.24);
 }
 
-
-
 @media (max-width: 900px) {
   .layout {
-    padding-right: 0 !important; /* إلغاء التوسعة على الموبايل دائماً */
+    padding-right: 0 !important;
   }
 
   .sidebar {
     box-shadow: -12px 0 30px rgba(0, 0, 0, 0.45);
   }
 
-  /* الزر على الموبايل */
   .sidebar-toggle {
     left: -32px;
   }
@@ -540,8 +514,16 @@ body {
   }
 }
 
+/* تم إصلاح الخطأ الإملائي هنا وتأمين حجم البطاقة للموبايل */
 @media (max-width: 640px) {
-  .lectures-rid {
+  .lectures-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  
+  .lecture-card {
+    max-width: 420px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
