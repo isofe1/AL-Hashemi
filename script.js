@@ -40,6 +40,10 @@ async function init() {
     const data = await res.json();
     state.data = data?.classes ? data : { classes: [] };
     if (!state.data.classes.length) { showError("لا توجد بيانات محاضرات حالياً."); return; }
+    
+    // تسجيل الحالة الأولى في تاريخ المتصفح
+    history.replaceState({ classIndex: state.activeClassIndex }, "");
+
     renderSidebar();
     renderLectures();
     hideLoading();
@@ -147,6 +151,10 @@ function openVideoModal(lecture) {
   modalTitleEl.textContent = lecture.title || "مشاهدة المحاضرة";
   currentVideoUrl = lecture.url; 
   player.source = { type: 'video', title: lecture.title, sources: [{ src: lecture.url, type: getMimeType(lecture.url) }] };
+  
+  // إبلاغ المتصفح بفتح المودال (كأنه صفحة جديدة)
+  history.pushState({ modalOpen: true, classIndex: state.activeClassIndex }, "");
+  
   modalEl.classList.remove("hidden");
   document.documentElement.style.overflow = "hidden";
   document.body.style.overflow = "hidden";
@@ -158,12 +166,22 @@ function openVideoModal(lecture) {
   }, 300);
 }
 
-function closeVideoModal() {
-  player.stop();
+// دالة الإخفاء الفعلية
+function hideModalVisually() {
+  if(player) player.stop();
   modalEl.classList.add("hidden");
   document.documentElement.style.overflow = "";
   document.body.style.overflow = "";
   document.body.style.touchAction = ""; 
+}
+
+function closeVideoModal() {
+  // إذا ضغط المستخدم على X والمودال مسجل بالتاريخ، نرجع خطوة للخلف
+  if (history.state && history.state.modalOpen) {
+    history.back(); // هذا راح يفعل حدث popstate أدناه
+  } else {
+    hideModalVisually();
+  }
 }
 
 function showLoading() { loadingEl.classList.remove("hidden"); errorEl.classList.add("hidden"); lecturesGridEl.classList.add("hidden"); }
@@ -184,7 +202,12 @@ classListEl.addEventListener("click", (e) => {
   if (!btn) return;
   const idx = Number(btn.dataset.classIndex);
   if (idx === state.activeClassIndex) { if (isMobileViewport()) setSidebarCollapsed(true); return; }
+  
   state.activeClassIndex = idx;
+  
+  // إبلاغ المتصفح بوجود فصل جديد (لأجل زر الرجوع)
+  history.pushState({ classIndex: idx }, "");
+  
   renderSidebar();
   renderLectures(true);
   if (isMobileViewport()) setSidebarCollapsed(true);
@@ -205,7 +228,23 @@ lecturesGridEl.addEventListener("click", (e) => {
 layoutEl.addEventListener("click", (e) => { if (isMobileViewport() && !sidebarEl.classList.contains("is-collapsed") && !e.target.closest('.sidebar')) setSidebarCollapsed(true); });
 modalEl.addEventListener("click", (e) => { if (e.target.dataset.close === "true") closeVideoModal(); });
 closeModalEl.addEventListener("click", closeVideoModal);
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeVideoModal(); });
+
+// السيطرة على زر الرجوع في الهاتف (الحدث السحري)
+window.addEventListener('popstate', (event) => {
+  // 1. إذا كان المودال مفتوح، سده بدون ما تطلع من الموقع
+  if (!modalEl.classList.contains('hidden')) {
+    hideModalVisually();
+  }
+
+  // 2. إذا انتقل بين الفصول، رجعه للفصل السابق بناءً على تاريخ المتصفح
+  const newIndex = event.state && event.state.classIndex !== undefined ? event.state.classIndex : 0;
+  
+  if (state.activeClassIndex !== newIndex) {
+    state.activeClassIndex = newIndex;
+    renderSidebar();
+    renderLectures();
+  }
+});
 
 function checkContinueWatching() {
   if(!continueBanner) return;
@@ -219,7 +258,9 @@ function checkContinueWatching() {
       setTimeout(() => continueBanner.classList.add("show"), 500);
       continueBanner.onclick = (e) => {
         if(e.target.closest('#closeBannerBtn')) { continueBanner.classList.remove('show'); setTimeout(() => continueBanner.classList.add('hidden'), 400); return; }
+        
         state.activeClassIndex = data.classIndex;
+        history.pushState({ classIndex: data.classIndex }, ""); // تحديث التاريخ
         renderSidebar();
         renderLectures();
         if (isMobileViewport()) setSidebarCollapsed(true);
@@ -236,15 +277,12 @@ const mobileMediaQuery = window.matchMedia("(max-width: 900px)");
 const hasVisited = localStorage.getItem('hashemi_visited_v1');
 
 if (!hasVisited) {
-  // مستخدم جديد أول مرة يدخل الموقع: القائمة تظهر له (مفتوحة)
   setSidebarCollapsed(false);
   localStorage.setItem('hashemi_visited_v1', 'true');
 } else {
-  // مستخدم قديم (سوى ريفريش): القائمة تكون مغلقة إذا موبايل، ومفتوحة إذا كمبيوتر
   setSidebarCollapsed(isMobileViewport());
 }
 
-// تفاعل الشاشة في حال تدوير الموبايل
 mobileMediaQuery.addEventListener("change", () => {
   setSidebarCollapsed(isMobileViewport());
 });
