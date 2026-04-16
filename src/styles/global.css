@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-base: #000000;
+  --color-bg-soft: #07090d;
+  --color-card: #101114;
+  --color-card-alt: #14161a;
+  --color-accent: #1e90ff;
+  --color-text-main: #f7f9fc;
+  --color-muted: #9ca7b7;
+  --color-border: rgba(255, 255, 255, 0.11);
+  --color-glass: rgba(255, 255, 255, 0.05);
+  --color-glass-strong: rgba(255, 255, 255, 0.08);
+
+  --font-sans: "Tajawal", system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  button, a, input, select, textarea {
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
+
+  img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  html, body {
+    @apply min-h-screen text-text-main font-sans antialiased;
+    background-color: var(--color-bg-base);
+    background-image:
+      radial-gradient(circle at 12% 6%, rgba(30, 144, 255, 0.14), transparent 34%),
+      radial-gradient(circle at 86% 14%, rgba(63, 118, 255, 0.1), transparent 28%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-glass border border-white/10 backdrop-blur-xl shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-gradient-to-b from-white/10 to-white/5 border border-white/10 backdrop-blur-xl shadow-lg;
+  }
+}

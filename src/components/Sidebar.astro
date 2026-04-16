@@ -1,0 +1,95 @@
+---
+import { ChevronRight } from 'lucide-astro';
+import data from '../../public/data.json';
+
+interface Props {
+  activeChapterIndex?: number;
+}
+
+const { activeChapterIndex = 0 } = Astro.props;
+
+// Read chapters from data
+const chapters = data.classes || [];
+---
+
+<aside
+  id="sidebar"
+  class="fixed top-0 right-0 h-screen w-80 z-50 glass-panel border-l border-white/10 transition-transform duration-300 md:translate-x-0 translate-x-full"
+>
+  <button
+    id="sidebarToggle"
+    class="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-20 glass-card rounded-l-xl flex items-center justify-center md:hidden"
+    aria-label="Toggle Sidebar"
+  >
+    <ChevronRight class="w-6 h-6 text-white rotate-180 transition-transform" id="sidebarToggleIcon" />
+  </button>
+
+  <div class="h-full overflow-y-auto px-4 py-8 custom-scrollbar">
+    <div class="text-center mb-6">
+      <img src="/Al-Hashemi.png" alt="حسين الهاشمي" class="w-28 h-28 rounded-full object-cover border-2 border-white/20 shadow-xl mx-auto mb-4" />
+      <h1 class="text-2xl font-bold text-white drop-shadow-md">حسين الهاشمي</h1>
+      <p class="text-muted text-sm mt-1">محاضرات 2026</p>
+    </div>
+
+    <div class="h-px w-full bg-gradient-to-l from-transparent via-white/10 to-transparent my-6"></div>
+
+    <nav>
+      <ul class="flex flex-col gap-2">
+        {chapters.map((chapter, idx) => (
+          <li>
+            <a
+              href={`/c/${idx}`}
+              class={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-right ${
+                idx === activeChapterIndex
+                  ? 'bg-accent/20 border-accent/50 shadow-[0_0_20px_rgba(30,144,255,0.2)] text-white'
+                  : 'bg-white/5 border-white/10 text-gray-200 hover:bg-white/10 hover:-translate-y-0.5'
+              }`}
+            >
+              <div class={`w-2.5 h-2.5 rounded-full ${idx === activeChapterIndex ? 'bg-accent shadow-[0_0_10px_#1e90ff]' : 'bg-white/20'}`}></div>
+              <span class="text-sm font-medium">{chapter.name}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</aside>
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('sidebarToggle');
+  const toggleIcon = document.getElementById('sidebarToggleIcon');
+
+  toggleBtn?.addEventListener('click', () => {
+    const isCollapsed = sidebar?.classList.contains('translate-x-full');
+
+    if (isCollapsed) {
+      sidebar?.classList.remove('translate-x-full');
+      toggleIcon?.classList.remove('rotate-180');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling on mobile when open
+    } else {
+      sidebar?.classList.add('translate-x-full');
+      toggleIcon?.classList.add('rotate-180');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // Close sidebar if clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth < 768 && !sidebar?.contains(e.target as Node) && sidebar && !sidebar.classList.contains('translate-x-full')) {
+      sidebar.classList.add('translate-x-full');
+      toggleIcon?.classList.add('rotate-180');
+      document.body.style.overflow = '';
+    }
+  });
+</script>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+</style>

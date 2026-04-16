@@ -1,0 +1,66 @@
+---
+import { Play } from 'lucide-astro';
+
+interface Props {
+  lecture: {
+    title: string;
+    duration?: string;
+    url: string;
+    coverImage?: string;
+  };
+  chapterIndex: number;
+  lectureIndex: number;
+  chapterName: string;
+}
+
+const { lecture, chapterIndex, lectureIndex, chapterName } = Astro.props;
+
+const CHAPTER_GRADIENTS = [
+  "from-blue-600/30 to-black",
+  "from-indigo-600/30 to-black",
+  "from-sky-600/30 to-black",
+  "from-green-600/30 to-black",
+  "from-orange-600/30 to-black",
+  "from-purple-600/30 to-black",
+  "from-gray-600/30 to-black",
+  "from-rose-600/30 to-black"
+];
+
+const gradient = CHAPTER_GRADIENTS[chapterIndex % CHAPTER_GRADIENTS.length];
+---
+
+<article class="glass-card rounded-2xl overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:border-accent/40 transition-all duration-300 flex flex-col sm:flex-row md:flex-col">
+  <div class="relative w-full sm:w-40 md:w-full aspect-video sm:aspect-auto md:aspect-video shrink-0 bg-black">
+    {lecture.coverImage ? (
+      <img src={lecture.coverImage} alt={lecture.title} class="w-full h-full object-cover" />
+    ) : (
+      <div class={`w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${gradient} p-4 text-center`}>
+        <span class="text-white font-bold text-lg drop-shadow-md">{chapterName}</span>
+        <span class="text-white/80 text-sm font-medium truncate w-full">{lecture.title || `محاضرة ${lectureIndex + 1}`}</span>
+      </div>
+    )}
+
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+
+    {lecture.duration && (
+      <span class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs px-2 py-1 rounded-md">
+        {lecture.duration}
+      </span>
+    )}
+  </div>
+
+  <div class="p-4 flex flex-col gap-3 flex-1 justify-center sm:justify-between md:justify-center items-start sm:items-start md:items-center text-right sm:text-right md:text-center">
+    <h3 class="text-white font-bold text-base md:text-lg line-clamp-2 drop-shadow-sm w-full">
+      {lecture.title || `محاضرة ${lectureIndex + 1}`}
+    </h3>
+
+    <!-- Link directly to the theater mode route instead of opening a modal -->
+    <a
+      href={`/w/${chapterIndex}/${lectureIndex}`}
+      class="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-accent/80 to-accent/50 border border-accent/50 text-white font-bold text-sm hover:brightness-110 hover:shadow-[0_0_20px_rgba(30,144,255,0.4)] transition-all sm:w-auto md:w-full"
+    >
+      <Play class="w-4 h-4 fill-white" />
+      <span>مشاهدة</span>
+    </a>
+  </div>
+</article>

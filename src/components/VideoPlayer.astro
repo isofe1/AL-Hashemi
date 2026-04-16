@@ -1,0 +1,172 @@
+---
+interface Props {
+  url: string;
+  title: string;
+  nextLectureUrl?: string;
+  nextLectureTitle?: string;
+}
+
+const { url, title, nextLectureUrl, nextLectureTitle } = Astro.props;
+
+function getMimeType(url: string) {
+  if (url.endsWith('.webm')) return 'video/webm';
+  if (url.endsWith('.ogg')) return 'video/ogg';
+  if (url.endsWith('.m3u8')) return 'application/x-mpegURL';
+  return 'video/mp4';
+}
+
+const mimeType = getMimeType(url);
+---
+
+<div class="relative w-full max-w-5xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-black group border border-white/10" id="videoContainer">
+  <video
+    id="player"
+    playsinline
+    controls
+    data-poster=""
+    class="w-full aspect-video"
+  >
+    <source src={url} type={mimeType} />
+  </video>
+
+  <!-- Custom End Screen (YouTube Style) -->
+  {nextLectureUrl && (
+    <div id="endScreen" class="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex-col items-center justify-center text-center p-6 hidden opacity-0 transition-opacity duration-500">
+      <p class="text-accent font-bold text-sm mb-2">المحاضرة التالية</p>
+      <h3 class="text-white font-bold text-2xl md:text-3xl mb-8 drop-shadow-lg">{nextLectureTitle}</h3>
+
+      <a
+        href={nextLectureUrl}
+        class="inline-flex items-center gap-3 bg-accent hover:bg-blue-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_20px_rgba(30,144,255,0.4)] hover:scale-105 transition-all"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 rotate-180"><path d="M8 5v14l11-7z"/></svg>
+        <span>تشغيل الآن</span>
+      </a>
+
+      <button id="replayBtn" class="mt-6 text-white/60 hover:text-white flex items-center gap-2 transition-colors">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        إعادة المشاهدة
+      </button>
+    </div>
+  )}
+</div>
+
+<script>
+  import Plyr from 'plyr';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const videoElement = document.getElementById('player') as HTMLVideoElement;
+    if (!videoElement) return;
+
+    // Initialize Plyr
+    const player = new Plyr(videoElement, {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+      settings: ['quality', 'speed'],
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+      keyboard: { focused: true, global: true }, // Enable robust keyboard shortcuts natively
+      seekTime: 10,
+    });
+
+    const url = videoElement.querySelector('source')?.src;
+    const progressKey = url ? `vid_progress_${url}` : null;
+
+    // Load saved progress
+    if (progressKey) {
+      const savedProgress = localStorage.getItem(progressKey);
+      if (savedProgress && parseFloat(savedProgress) > 30) {
+        player.once('ready', () => {
+          player.currentTime = parseFloat(savedProgress);
+        });
+      }
+    }
+
+    // Save progress periodically
+    player.on('timeupdate', () => {
+      if (progressKey && player.currentTime > 30) {
+        localStorage.setItem(progressKey, player.currentTime.toString());
+      }
+    });
+
+    // End screen logic
+    const endScreen = document.getElementById('endScreen');
+    const replayBtn = document.getElementById('replayBtn');
+
+    player.on('ended', () => {
+      if (progressKey) localStorage.removeItem(progressKey);
+      if (endScreen) {
+        endScreen.classList.remove('hidden');
+        endScreen.classList.add('flex');
+        // Small delay to allow display block to apply before opacity transition
+        setTimeout(() => {
+          endScreen.classList.remove('opacity-0');
+          endScreen.classList.add('opacity-100');
+        }, 50);
+      }
+    });
+
+    player.on('play', () => {
+       if (endScreen && !endScreen.classList.contains('hidden')) {
+          hideEndScreen();
+       }
+    });
+
+    replayBtn?.addEventListener('click', () => {
+      hideEndScreen();
+      player.restart();
+      player.play();
+    });
+
+    function hideEndScreen() {
+      if (!endScreen) return;
+      endScreen.classList.remove('opacity-100');
+      endScreen.classList.add('opacity-0');
+      setTimeout(() => {
+        endScreen.classList.add('hidden');
+        endScreen.classList.remove('flex');
+      }, 500);
+    }
+
+    // Double click to skip (Mobile friendly)
+    const plyrContainer = document.querySelector('.plyr');
+    if (plyrContainer) {
+      plyrContainer.addEventListener('dblclick', (e) => {
+        // Prevent default fullscreen toggle on double click if desired,
+        // or just add skipping logic
+        const rect = plyrContainer.getBoundingClientRect();
+        const event = e as MouseEvent;
+        const x = event.clientX - rect.left;
+
+        // If clicking on controls, don't skip
+        if ((e.target as HTMLElement).closest('.plyr__controls')) return;
+
+        if (x > rect.width / 2) {
+          player.forward(10);
+        } else {
+          player.rewind(10);
+        }
+      });
+    }
+  });
+</script>
+
+<style is:global>
+  :root {
+    --plyr-color-main: #1e90ff;
+    --plyr-video-background: #000;
+  }
+
+  .plyr--video {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  .plyr .plyr__controls {
+    transition: opacity 0.4s ease, visibility 0.4s ease !important;
+  }
+
+  .plyr--hide-controls .plyr__controls {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition-delay: 2s !important;
+  }
+</style>
