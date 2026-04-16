@@ -29,6 +29,10 @@ const { title } = Astro.props;
     <!-- Plyr CSS for the video player later -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 
+    <!-- Eruda Console for Debugging on Mobile -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+
     <script>
       import { registerSW } from 'virtual:pwa-register';
 
