@@ -18,7 +18,7 @@ const chapters = data.classes || [];
 >
   <button
     id="sidebarToggle"
-    class="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-20 glass-card rounded-l-xl flex items-center justify-center md:hidden"
+    class="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-20 glass-card rounded-l-xl flex items-center justify-center"
     aria-label="Toggle Sidebar"
   >
     <ChevronRight class="w-6 h-6 text-white rotate-180 transition-transform" id="sidebarToggleIcon" />
@@ -59,18 +59,41 @@ const chapters = data.classes || [];
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('sidebarToggle');
   const toggleIcon = document.getElementById('sidebarToggleIcon');
+  const mainLayout = document.getElementById('mainLayout');
+
+  // Initialization
+  const isDesktop = window.innerWidth >= 768;
+  if (isDesktop) {
+    // Sidebar is open by default on desktop, point toggle icon to close
+    toggleIcon?.classList.remove('rotate-180');
+  }
 
   toggleBtn?.addEventListener('click', () => {
-    const isCollapsed = sidebar?.classList.contains('translate-x-full');
+    const isCollapsedMobile = sidebar?.classList.contains('translate-x-full');
+    const isCollapsedDesktop = sidebar?.classList.contains('md:translate-x-full');
 
-    if (isCollapsed) {
-      sidebar?.classList.remove('translate-x-full');
-      toggleIcon?.classList.remove('rotate-180');
-      document.body.style.overflow = 'hidden'; // Prevent scrolling on mobile when open
+    const isDesktop = window.innerWidth >= 768;
+
+    if (isDesktop) {
+      if (isCollapsedDesktop) {
+        sidebar?.classList.remove('md:translate-x-full');
+        toggleIcon?.classList.remove('rotate-180');
+        mainLayout?.classList.add('md:pr-80');
+      } else {
+        sidebar?.classList.add('md:translate-x-full');
+        toggleIcon?.classList.add('rotate-180');
+        mainLayout?.classList.remove('md:pr-80');
+      }
     } else {
-      sidebar?.classList.add('translate-x-full');
-      toggleIcon?.classList.add('rotate-180');
-      document.body.style.overflow = '';
+      if (isCollapsedMobile) {
+        sidebar?.classList.remove('translate-x-full');
+        toggleIcon?.classList.remove('rotate-180');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling on mobile when open
+      } else {
+        sidebar?.classList.add('translate-x-full');
+        toggleIcon?.classList.add('rotate-180');
+        document.body.style.overflow = '';
+      }
     }
   });
 
