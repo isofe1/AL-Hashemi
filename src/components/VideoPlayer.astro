@@ -77,13 +77,23 @@ const mimeType = getMimeType(url);
       const playButton = controlsContainer?.querySelector('[data-plyr="play"]');
 
       if (controlsContainer && playButton && !controlsContainer.querySelector('.custom-seek-backward')) {
+        // Helper to trigger seek indicator
+        const triggerIndicator = (amount: number) => {
+          if (typeof window !== 'undefined' && (window as any).showSeekIndicator) {
+             (window as any).showSeekIndicator(amount);
+          }
+        };
+
         // Rewind Button
         const rewindBtn = document.createElement('button');
         rewindBtn.type = 'button';
         rewindBtn.className = 'plyr__control custom-seek-backward';
         rewindBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>`;
         rewindBtn.ariaLabel = `Rewind ${currentSkipTime}s`;
-        rewindBtn.addEventListener('click', () => player.rewind(currentSkipTime));
+        rewindBtn.addEventListener('click', () => {
+           player.rewind(currentSkipTime);
+           triggerIndicator(-currentSkipTime);
+        });
 
         // Forward Button
         const forwardBtn = document.createElement('button');
@@ -91,7 +101,10 @@ const mimeType = getMimeType(url);
         forwardBtn.className = 'plyr__control custom-seek-forward';
         forwardBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>`;
         forwardBtn.ariaLabel = `Forward ${currentSkipTime}s`;
-        forwardBtn.addEventListener('click', () => player.forward(currentSkipTime));
+        forwardBtn.addEventListener('click', () => {
+           player.forward(currentSkipTime);
+           triggerIndicator(currentSkipTime);
+        });
 
         controlsContainer.insertBefore(rewindBtn, playButton);
         controlsContainer.insertBefore(forwardBtn, playButton.nextSibling);
@@ -184,7 +197,7 @@ const mimeType = getMimeType(url);
     const globalProgressKey = 'last_watched_video';
 
     // Parse URL to get chapter and lecture info safely from pathname
-    const match = window.location.pathname.match(/\/w\/(\d+)\/(\d+)/);
+    const match = window.location.pathname.match(/\/w\/([^\/]+)\/([^\/]+)/);
     const currentChapter = match ? match[1] : '';
     const currentLecture = match ? match[2] : '';
     const lectureTitle = document.title.replace('مشاهدة | ', '').trim() || 'محاضرة';
@@ -305,6 +318,86 @@ const mimeType = getMimeType(url);
     // Double click to skip (Mobile friendly)
     const plyrContainer = document.querySelector('.plyr');
     if (plyrContainer) {
+      // Setup Visual Seek Indicator Overlay
+      const indicatorOverlay = document.createElement('div');
+      indicatorOverlay.className = 'seek-indicator-overlay absolute inset-0 pointer-events-none z-50 flex items-center opacity-0 transition-opacity duration-200';
+      indicatorOverlay.innerHTML = `
+        <div class="seek-indicator-left w-1/3 h-full flex flex-col justify-center items-center opacity-0 bg-gradient-to-r from-black/20 to-transparent transition-opacity duration-200">
+           <div class="bg-black/40 rounded-full p-4 backdrop-blur-sm flex flex-col items-center justify-center transform scale-90 transition-transform duration-200 will-change-transform">
+             <svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-500 mb-1" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+             <span class="text-blue-500 font-bold text-lg seek-text-left">-10 ث</span>
+           </div>
+        </div>
+        <div class="w-1/3 h-full"></div>
+        <div class="seek-indicator-right w-1/3 h-full flex flex-col justify-center items-center opacity-0 bg-gradient-to-l from-black/20 to-transparent transition-opacity duration-200">
+           <div class="bg-black/40 rounded-full p-4 backdrop-blur-sm flex flex-col items-center justify-center transform scale-90 transition-transform duration-200 will-change-transform">
+             <svg viewBox="0 0 24 24" class="w-8 h-8 text-blue-500 mb-1" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+             <span class="text-blue-500 font-bold text-lg seek-text-right">+10 ث</span>
+           </div>
+        </div>
+      `;
+      plyrContainer.appendChild(indicatorOverlay);
+
+      const leftSide = indicatorOverlay.querySelector('.seek-indicator-left');
+      const rightSide = indicatorOverlay.querySelector('.seek-indicator-right');
+      const textLeft = indicatorOverlay.querySelector('.seek-text-left');
+      const textRight = indicatorOverlay.querySelector('.seek-text-right');
+
+      let seekTimeout: NodeJS.Timeout;
+      let accumulatedSeek = 0;
+      let seekDirection = 0; // -1 for left, 1 for right
+
+      const triggerIndicator = (amount: number) => {
+         if (seekDirection !== 0 && Math.sign(amount) !== seekDirection) {
+            // Reset if they suddenly switch directions
+            accumulatedSeek = amount;
+         } else {
+            accumulatedSeek += amount;
+         }
+         seekDirection = Math.sign(accumulatedSeek);
+
+         indicatorOverlay.classList.remove('opacity-0');
+         indicatorOverlay.classList.add('opacity-100');
+
+         if (seekDirection === 1) {
+            if (leftSide) leftSide.classList.replace('opacity-100', 'opacity-0');
+            if (rightSide) {
+               rightSide.classList.replace('opacity-0', 'opacity-100');
+               const inner = rightSide.querySelector('div');
+               inner?.classList.replace('scale-90', 'scale-110');
+            }
+            if (textRight) textRight.textContent = `+${accumulatedSeek} ث`;
+         } else {
+            if (rightSide) rightSide.classList.replace('opacity-100', 'opacity-0');
+            if (leftSide) {
+               leftSide.classList.replace('opacity-0', 'opacity-100');
+               const inner = leftSide.querySelector('div');
+               inner?.classList.replace('scale-90', 'scale-110');
+            }
+            if (textLeft) textLeft.textContent = `${accumulatedSeek} ث`;
+         }
+
+         clearTimeout(seekTimeout);
+
+         // Animate inner scale back down slightly for a "pulse" effect
+         setTimeout(() => {
+            const activeInner = (seekDirection === 1 ? rightSide : leftSide)?.querySelector('div');
+            activeInner?.classList.replace('scale-110', 'scale-100');
+         }, 150);
+
+         seekTimeout = setTimeout(() => {
+            indicatorOverlay.classList.remove('opacity-100');
+            indicatorOverlay.classList.add('opacity-0');
+            if (leftSide) leftSide.classList.replace('opacity-100', 'opacity-0');
+            if (rightSide) rightSide.classList.replace('opacity-100', 'opacity-0');
+            accumulatedSeek = 0;
+            seekDirection = 0;
+         }, 800);
+      };
+
+      // Export globally so the manual buttons can call it too
+      (window as any).showSeekIndicator = triggerIndicator;
+
       // Intercept double clicks on the video to prevent zoom/fullscreen and apply custom skip
       const videoWrapper = plyrContainer.querySelector('.plyr__video-wrapper');
       if (videoWrapper) {
@@ -320,10 +413,15 @@ const mimeType = getMimeType(url);
             const touch = (e as TouchEvent).changedTouches[0];
             const rect = videoWrapper.getBoundingClientRect();
             const x = touch.clientX - rect.left;
+            // Since layout is RTL, x > width/2 is actually the left visual side on screen if not flipped,
+            // But bounding client rect left->right is always 0 to width.
+            // We want forward to be visually on the right side of the screen (larger X).
             if (x > rect.width / 2) {
               player.forward(currentSkipTime);
+              triggerIndicator(currentSkipTime);
             } else {
               player.rewind(currentSkipTime);
+              triggerIndicator(-currentSkipTime);
             }
           }
           lastTap = currentTime;
@@ -338,8 +436,10 @@ const mimeType = getMimeType(url);
 
           if (x > rect.width / 2) {
             player.forward(currentSkipTime);
+            triggerIndicator(currentSkipTime);
           } else {
             player.rewind(currentSkipTime);
+            triggerIndicator(-currentSkipTime);
           }
         });
       }
