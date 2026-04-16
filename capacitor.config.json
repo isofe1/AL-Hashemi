@@ -1,0 +1,6 @@
+{
+  "appId": "com.alhashemi.app",
+  "appName": "الهاشمي",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
