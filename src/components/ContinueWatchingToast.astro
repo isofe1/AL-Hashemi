@@ -1,0 +1,75 @@
+---
+---
+
+<div id="continueWatchingToast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[100] w-[90%] max-w-sm hidden opacity-0 translate-y-10 transition-all duration-500 ease-out">
+  <div class="glass-card bg-black/90 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl p-4 flex items-center justify-between gap-4">
+
+    <a id="cwt-link" href="#" class="flex-1 flex items-center gap-3 group">
+      <div class="w-12 h-12 rounded-full bg-accent text-white flex items-center justify-center shadow-[0_0_15px_rgba(30,144,255,0.4)] group-hover:scale-110 group-hover:bg-blue-500 transition-all flex-shrink-0">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 rotate-180"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="overflow-hidden">
+        <p class="text-white/60 text-xs font-medium mb-1 truncate" id="cwt-chapter">الفصل</p>
+        <p class="text-white font-bold text-sm truncate group-hover:text-accent transition-colors" id="cwt-title">اسم المحاضرة</p>
+      </div>
+    </a>
+
+    <button id="cwt-close" class="text-white/40 hover:text-white p-2 rounded-lg transition-colors flex-shrink-0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Only show on non-video pages
+    if (window.location.pathname.startsWith('/w/')) return;
+
+    const toast = document.getElementById('continueWatchingToast');
+    const link = document.getElementById('cwt-link') as HTMLAnchorElement;
+    const chapterEl = document.getElementById('cwt-chapter');
+    const titleEl = document.getElementById('cwt-title');
+    const closeBtn = document.getElementById('cwt-close');
+
+    if (!toast || !link || !chapterEl || !titleEl || !closeBtn) return;
+
+    try {
+      const dataStr = localStorage.getItem('last_watched_video');
+      if (dataStr) {
+        const data = JSON.parse(dataStr);
+        // Only show if the data is recent (e.g., within the last 7 days)
+        const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+        if (data && data.url && data.title && data.timestamp && (Date.now() - data.timestamp < ONE_WEEK)) {
+           // We also don't show it if they basically finished the video
+           if (data.duration && (data.duration - data.currentTime < 10)) {
+               // Video finished
+               return;
+           }
+
+           link.href = data.url;
+           chapterEl.textContent = data.chapterName || 'متابعة المشاهدة';
+           titleEl.textContent = data.title;
+
+           toast.classList.remove('hidden');
+           // small delay for transition
+           setTimeout(() => {
+             toast.classList.remove('opacity-0', 'translate-y-10');
+             toast.classList.add('opacity-100', 'translate-y-0');
+           }, 100);
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing continue watching data', e);
+    }
+
+    closeBtn.addEventListener('click', () => {
+       toast.classList.remove('opacity-100', 'translate-y-0');
+       toast.classList.add('opacity-0', 'translate-y-10');
+       setTimeout(() => {
+         toast.classList.add('hidden');
+       }, 500);
+       // Optionally clear or mark as dismissed so it doesn't show again until new video
+       // localStorage.removeItem('last_watched_video');
+    });
+  });
+</script>

@@ -58,32 +58,208 @@ const mimeType = getMimeType(url);
     const videoElement = document.getElementById('player') as HTMLVideoElement;
     if (!videoElement) return;
 
+    // Load custom skip interval
+    const savedSkip = localStorage.getItem('plyr_skip_interval');
+    let currentSkipTime = savedSkip ? parseInt(savedSkip, 10) : 10;
+
     // Initialize Plyr
     const player = new Plyr(videoElement, {
       controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
       settings: ['quality', 'speed'],
       speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
       keyboard: { focused: true, global: true }, // Enable robust keyboard shortcuts natively
-      seekTime: 10,
+      seekTime: currentSkipTime,
+    });
+
+    player.on('ready', () => {
+      // 1. Inject Manual Seek Buttons
+      const controlsContainer = plyrContainer?.querySelector('.plyr__controls');
+      const playButton = controlsContainer?.querySelector('[data-plyr="play"]');
+
+      if (controlsContainer && playButton && !controlsContainer.querySelector('.custom-seek-backward')) {
+        // Rewind Button
+        const rewindBtn = document.createElement('button');
+        rewindBtn.type = 'button';
+        rewindBtn.className = 'plyr__control custom-seek-backward';
+        rewindBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>`;
+        rewindBtn.ariaLabel = `Rewind ${currentSkipTime}s`;
+        rewindBtn.addEventListener('click', () => player.rewind(currentSkipTime));
+
+        // Forward Button
+        const forwardBtn = document.createElement('button');
+        forwardBtn.type = 'button';
+        forwardBtn.className = 'plyr__control custom-seek-forward';
+        forwardBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>`;
+        forwardBtn.ariaLabel = `Forward ${currentSkipTime}s`;
+        forwardBtn.addEventListener('click', () => player.forward(currentSkipTime));
+
+        controlsContainer.insertBefore(rewindBtn, playButton);
+        controlsContainer.insertBefore(forwardBtn, playButton.nextSibling);
+      }
+
+      // 2. Inject Custom Skip Interval Menu
+      const settingsMenu = plyrContainer?.querySelector('.plyr__menu__container > div');
+      if (settingsMenu && !settingsMenu.querySelector('[data-plyr="skip-interval"]')) {
+        const homeMenu = settingsMenu.querySelector('[id^="plyr-settings-"][id$="-home"] [role="menu"]');
+        if (homeMenu) {
+          // Add Home Menu Button for Skip Interval
+          const skipIntervalBtn = document.createElement('button');
+          skipIntervalBtn.type = 'button';
+          skipIntervalBtn.className = 'plyr__control plyr__control--forward';
+          skipIntervalBtn.setAttribute('data-plyr', 'skip-interval');
+          skipIntervalBtn.setAttribute('role', 'menuitem');
+          skipIntervalBtn.setAttribute('aria-haspopup', 'true');
+          skipIntervalBtn.innerHTML = `<span>Skip Time<span class="plyr__menu__value">${currentSkipTime}s</span></span>`;
+          homeMenu.appendChild(skipIntervalBtn);
+
+          // Add Submenu for Skip Interval
+          const baseId = settingsMenu.querySelector('[id^="plyr-settings-"][id$="-home"]')?.id.replace('-home', '');
+          const skipIntervalMenu = document.createElement('div');
+          skipIntervalMenu.id = `${baseId}-skip-interval`;
+          skipIntervalMenu.hidden = true;
+          skipIntervalMenu.innerHTML = `
+            <button type="button" class="plyr__control plyr__control--back">
+              <span aria-hidden="true">Skip Time</span><span class="plyr__sr-only">Go back to previous menu</span>
+            </button>
+            <div role="menu">
+              ${[5, 10, 15, 30].map(val => `
+                <button data-plyr="skip-interval-option" type="button" role="menuitemradio" class="plyr__control" aria-checked="${val === currentSkipTime}" value="${val}">
+                  <span>${val}s</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+          settingsMenu.appendChild(skipIntervalMenu);
+
+          // Event Listeners for new menu
+          skipIntervalBtn.addEventListener('click', () => {
+            const home = document.getElementById(`${baseId}-home`);
+            if (home) home.hidden = true;
+            skipIntervalMenu.hidden = false;
+          });
+
+          const backBtn = skipIntervalMenu.querySelector('.plyr__control--back');
+          backBtn?.addEventListener('click', () => {
+            skipIntervalMenu.hidden = true;
+            const home = document.getElementById(`${baseId}-home`);
+            if (home) home.hidden = false;
+          });
+
+          const options = skipIntervalMenu.querySelectorAll('[data-plyr="skip-interval-option"]');
+          options.forEach(opt => {
+            opt.addEventListener('click', (e) => {
+              const btn = e.currentTarget as HTMLButtonElement;
+              const val = parseInt(btn.value, 10);
+              currentSkipTime = val;
+              localStorage.setItem('plyr_skip_interval', val.toString());
+              // @ts-ignore: Plyr config is not fully typed
+              player.config.seekTime = val; // Update plyr config
+              skipIntervalBtn.querySelector('.plyr__menu__value')!.textContent = `${val}s`;
+
+              // Update aria-checked
+              options.forEach(o => o.setAttribute('aria-checked', 'false'));
+              btn.setAttribute('aria-checked', 'true');
+
+              // Update manual buttons aria-labels
+              const rewind = controlsContainer?.querySelector('.custom-seek-backward');
+              const forward = controlsContainer?.querySelector('.custom-seek-forward');
+              if (rewind) rewind.ariaLabel = `Rewind ${val}s`;
+              if (forward) forward.ariaLabel = `Forward ${val}s`;
+
+              // Close menu
+              skipIntervalMenu.hidden = true;
+              const home = document.getElementById(`${baseId}-home`);
+              if (home) home.hidden = false;
+
+              // Close settings menu completely (optional)
+              document.body.click(); // trigger global click to close plyr menu
+            });
+          });
+        }
+      }
     });
 
     const url = videoElement.querySelector('source')?.src;
     const progressKey = url ? `vid_progress_${url}` : null;
+    const globalProgressKey = 'last_watched_video';
+
+    // Parse URL to get chapter and lecture info safely from pathname
+    const match = window.location.pathname.match(/\/w\/(\d+)\/(\d+)/);
+    const currentChapter = match ? match[1] : '';
+    const currentLecture = match ? match[2] : '';
+    const lectureTitle = document.title.replace('مشاهدة | ', '').trim() || 'محاضرة';
 
     // Load saved progress
     if (progressKey) {
       const savedProgress = localStorage.getItem(progressKey);
-      if (savedProgress && parseFloat(savedProgress) > 30) {
+      if (savedProgress && parseFloat(savedProgress) > 10) {
         player.once('ready', () => {
-          player.currentTime = parseFloat(savedProgress);
+          // Create Resume Prompt instead of auto jumping
+          const resumePrompt = document.createElement('div');
+          resumePrompt.className = 'absolute top-4 left-4 right-4 z-50 flex items-center justify-between bg-black/80 backdrop-blur-md border border-white/20 p-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-[-100%] opacity-0';
+          resumePrompt.innerHTML = `
+            <div class="flex items-center gap-3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-6 h-6 text-accent"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+              <div>
+                <p class="text-white font-bold text-sm md:text-base">استكمال المشاهدة؟</p>
+                <p class="text-white/60 text-xs md:text-sm">توقفت عند الدقيقة ${Math.floor(parseFloat(savedProgress) / 60)}:${Math.floor(parseFloat(savedProgress) % 60).toString().padStart(2, '0')}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="resume-btn bg-accent hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg">نعم، استكمل</button>
+              <button class="dismiss-btn text-white/60 hover:text-white px-3 py-2 rounded-lg text-sm transition-colors">إغلاق</button>
+            </div>
+          `;
+
+          videoElement.parentElement?.appendChild(resumePrompt);
+
+          // Animate in
+          setTimeout(() => {
+            resumePrompt.classList.remove('translate-y-[-100%]', 'opacity-0');
+          }, 500);
+
+          // Handle clicks
+          const resumeBtn = resumePrompt.querySelector('.resume-btn');
+          const dismissBtn = resumePrompt.querySelector('.dismiss-btn');
+
+          resumeBtn?.addEventListener('click', () => {
+            player.currentTime = parseFloat(savedProgress);
+            player.play();
+            resumePrompt.remove();
+          });
+
+          dismissBtn?.addEventListener('click', () => {
+            resumePrompt.remove();
+          });
+
+          // Auto dismiss after 10s
+          setTimeout(() => {
+             if (resumePrompt.parentElement) {
+                resumePrompt.classList.add('translate-y-[-100%]', 'opacity-0');
+                setTimeout(() => resumePrompt.remove(), 300);
+             }
+          }, 10000);
         });
       }
     }
 
     // Save progress periodically
     player.on('timeupdate', () => {
-      if (progressKey && player.currentTime > 30) {
+      if (progressKey && player.currentTime > 5 && player.duration && player.currentTime < player.duration - 5) {
         localStorage.setItem(progressKey, player.currentTime.toString());
+
+        // Save global state for the "Continue Watching" toast
+        if (currentChapter && currentLecture) {
+           const chapterName = document.querySelector('header h1')?.textContent?.trim() || 'الفصل';
+           localStorage.setItem(globalProgressKey, JSON.stringify({
+              url: window.location.pathname,
+              title: lectureTitle,
+              chapterName: chapterName,
+              currentTime: player.currentTime,
+              duration: player.duration,
+              timestamp: Date.now()
+           }));
+        }
       }
     });
 
@@ -129,22 +305,44 @@ const mimeType = getMimeType(url);
     // Double click to skip (Mobile friendly)
     const plyrContainer = document.querySelector('.plyr');
     if (plyrContainer) {
-      plyrContainer.addEventListener('dblclick', (e) => {
-        // Prevent default fullscreen toggle on double click if desired,
-        // or just add skipping logic
-        const rect = plyrContainer.getBoundingClientRect();
-        const event = e as MouseEvent;
-        const x = event.clientX - rect.left;
+      // Intercept double clicks on the video to prevent zoom/fullscreen and apply custom skip
+      const videoWrapper = plyrContainer.querySelector('.plyr__video-wrapper');
+      if (videoWrapper) {
+        // To prevent default behavior effectively on mobile
+        (videoWrapper as HTMLElement).style.touchAction = 'manipulation';
 
-        // If clicking on controls, don't skip
-        if ((e.target as HTMLElement).closest('.plyr__controls')) return;
+        let lastTap = 0;
+        videoWrapper.addEventListener('touchstart', (e) => {
+          const currentTime = new Date().getTime();
+          const tapLength = currentTime - lastTap;
+          if (tapLength < 500 && tapLength > 0) {
+            e.preventDefault(); // Prevent zoom
+            const touch = (e as TouchEvent).changedTouches[0];
+            const rect = videoWrapper.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            if (x > rect.width / 2) {
+              player.forward(currentSkipTime);
+            } else {
+              player.rewind(currentSkipTime);
+            }
+          }
+          lastTap = currentTime;
+        }, { passive: false });
 
-        if (x > rect.width / 2) {
-          player.forward(10);
-        } else {
-          player.rewind(10);
-        }
-      });
+        videoWrapper.addEventListener('dblclick', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const rect = videoWrapper.getBoundingClientRect();
+          const event = e as MouseEvent;
+          const x = event.clientX - rect.left;
+
+          if (x > rect.width / 2) {
+            player.forward(currentSkipTime);
+          } else {
+            player.rewind(currentSkipTime);
+          }
+        });
+      }
     }
   });
 </script>
