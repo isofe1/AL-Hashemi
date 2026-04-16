@@ -1,0 +1,152 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #06070a;
+  color: #f5f8ff;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) 1fr;
+}
+
+.sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sidebar button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0f1118;
+  color: #f5f8ff;
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.sidebar button:hover,
+.sidebar button.is-active {
+  border-color: #0a84ff;
+  transform: translateY(-1px);
+}
+
+.content {
+  padding: 1.25rem;
+}
+
+.lecture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.lecture-grid article {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #10131a;
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.lecture-grid button,
+.ghost-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #171b24;
+  color: #f5f8ff;
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+}
+
+.theater-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: #050607;
+}
+
+.theater-topbar,
+.theater-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.theater-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 0;
+}
+
+.theater-topbar h1 {
+  margin: 0;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  font-weight: 600;
+}
+
+.video-wrap {
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+}
+
+.video-wrap video {
+  width: min(100%, 1280px);
+  max-height: calc(100dvh - 130px);
+  border-radius: 12px;
+  background: #000;
+  object-fit: contain;
+}
+
+.timeline {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.timeline span {
+  display: block;
+  height: 100%;
+  background: #0a84ff;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .video-wrap video {
+    max-height: none;
+    border-radius: 0;
+  }
+}
