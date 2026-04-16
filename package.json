@@ -12,12 +12,19 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.8",
     "@lucide/astro": "^1.8.0",
     "@tailwindcss/vite": "^4.2.2",
     "@vercel/analytics": "^2.0.1",
+    "@vite-pwa/astro": "^1.2.0",
     "astro": "^6.1.7",
     "lucide-astro": "^0.556.0",
     "plyr": "^3.8.4",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "vite-plugin-pwa": "^1.2.0",
+    "workbox-window": "^7.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2"
   }
 }
