@@ -4,7 +4,11 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="الهاشمي | المنصة التعليمية">
   <head>
-    <meta http-equiv="refresh" content="0;url=/c/0" />
+    <script>
+      // For static file builds or Capacitor (file://), use JS to safely redirect
+      // to the actual HTML file without causing meta refresh loops if intercepted.
+      window.location.replace('c/0.html');
+    </script>
   </head>
   <div class="min-h-screen flex items-center justify-center">
     <div class="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>

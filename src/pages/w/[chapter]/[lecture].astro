@@ -35,7 +35,7 @@ if (!chapter || !lecture) {
 const nextLectureIndex = lectureIndex + 1;
 const hasNextLecture = nextLectureIndex < (chapter.lectures?.length || 0);
 const nextLecture = hasNextLecture ? chapter.lectures![nextLectureIndex] : undefined;
-const nextLectureUrl = hasNextLecture ? `/w/${chapterIndex}/${nextLectureIndex}` : undefined;
+const nextLectureUrl = hasNextLecture ? `/w/${chapterIndex}/${nextLectureIndex}.html` : undefined;
 ---
 
 <Layout title={`مشاهدة | ${lecture.title}`}>
@@ -43,7 +43,7 @@ const nextLectureUrl = hasNextLecture ? `/w/${chapterIndex}/${nextLectureIndex}`
     <!-- Navbar / Header for Watch Page -->
     <header class="w-full p-4 md:p-6 flex items-center justify-between glass-panel border-b border-white/10 z-40 sticky top-0">
       <a
-        href={`/c/${chapterIndex}`}
+        href={`/c/${chapterIndex}.html`}
         class="flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10 px-4 py-2 rounded-xl transition-all font-medium"
       >
         <ChevronRight class="w-5 h-5" />
