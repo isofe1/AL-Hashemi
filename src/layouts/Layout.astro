@@ -58,6 +58,29 @@ const { title } = Astro.props;
         });
       }
     </script>
+
+    <!-- Global Link Interceptor for Capacitor file:// routing -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement;
+          const anchor = target.closest('a');
+
+          if (!anchor || !anchor.href) return;
+
+          // Only intercept local links
+          const url = new URL(anchor.href);
+          if (url.protocol !== 'http:' && url.protocol !== 'https:' && url.protocol !== 'file:') return;
+          if (url.origin !== window.location.origin && url.origin !== 'null' && url.origin !== 'file://') return;
+          if (url.pathname === '/' || url.pathname.includes('.')) return; // Ignore root or files with extensions
+
+          // If it's a clean path like /c/1 or /w/0/5, append .html
+          e.preventDefault();
+          const targetPath = url.pathname.replace(/\/$/, '') + '.html' + url.search + url.hash;
+          window.location.href = targetPath;
+        });
+      });
+    </script>
   </head>
   <body class="overflow-x-hidden selection:bg-accent selection:text-white">
     <slot />
