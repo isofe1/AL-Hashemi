@@ -32,6 +32,9 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    format: 'file'
+  },
   vite: {
     plugins: [tailwindcss()]
   }
